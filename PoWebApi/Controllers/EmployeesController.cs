@@ -10,7 +10,7 @@ using PoWebApi.Models;
 
 namespace PoWebApi.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/[controller]")]     //designates the rest of the URL following localhost:portnumber/
     [ApiController]
     public class EmployeesController : ControllerBase
     {
@@ -36,7 +36,7 @@ namespace PoWebApi.Controllers
 
         // GET: api/Employees
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Employee>>> GetEmployee()
+        public async Task<ActionResult<IEnumerable<Employee>>> GetEmployee()    //actionresult allows return of multiple data types, either the requested result or possibly an error message string
         {
             return await _context.Employee.ToListAsync();
         }
