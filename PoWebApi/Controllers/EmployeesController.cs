@@ -25,7 +25,7 @@ namespace PoWebApi.Controllers
         [HttpGet("{login}/{password}")]
         public async Task<ActionResult<Employee>> Login(string login, string password)
         {
-            var empl = await _context.Employee
+            var empl = await _context.Employees
                 .SingleOrDefaultAsync(e => e.Login == login && e.Password == password);
             if(empl == null)
             {
@@ -38,14 +38,14 @@ namespace PoWebApi.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Employee>>> GetEmployee()    //actionresult allows return of multiple data types, either the requested result or possibly an error message string
         {
-            return await _context.Employee.ToListAsync();
+            return await _context.Employees.ToListAsync();
         }
 
         // GET: api/Employees/5
         [HttpGet("{id}")]
         public async Task<ActionResult<Employee>> GetEmployee(int id)
         {
-            var employee = await _context.Employee.FindAsync(id);
+            var employee = await _context.Employees.FindAsync(id);
 
             if (employee == null)
             {
@@ -93,7 +93,7 @@ namespace PoWebApi.Controllers
         [HttpPost]
         public async Task<ActionResult<Employee>> PostEmployee(Employee employee)
         {
-            _context.Employee.Add(employee);
+            _context.Employees.Add(employee);
             await _context.SaveChangesAsync();
 
             return CreatedAtAction("GetEmployee", new { id = employee.Id }, employee);
@@ -103,13 +103,13 @@ namespace PoWebApi.Controllers
         [HttpDelete("{id}")]
         public async Task<ActionResult<Employee>> DeleteEmployee(int id)
         {
-            var employee = await _context.Employee.FindAsync(id);
+            var employee = await _context.Employees.FindAsync(id);
             if (employee == null)
             {
                 return NotFound();
             }
 
-            _context.Employee.Remove(employee);
+            _context.Employees.Remove(employee);
             await _context.SaveChangesAsync();
 
             return employee;
@@ -117,7 +117,7 @@ namespace PoWebApi.Controllers
 
         private bool EmployeeExists(int id)
         {
-            return _context.Employee.Any(e => e.Id == id);
+            return _context.Employees.Any(e => e.Id == id);
         }
     }
 }
