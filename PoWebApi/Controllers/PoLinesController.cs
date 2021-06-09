@@ -21,6 +21,46 @@ namespace PoWebApi.Controllers
             _context = context;
         }
 
+        //**************************************************************************
+        //homework - post/put/delete calls this private method -
+        //pass PO ID - read PO - get all PoLines attached to PO(search by PoId FK) -
+        //iterate through each PoLine, multiply poline.quantity * item.price
+        //(find item.price through itemid FK) for linetotal,
+        //sum up all line-totals for all PoLines
+        //TIP: you will have to join polines to item to combine price and quantity
+        //sum method in EF - point to data, sum up line-totals
+        //**************************************************************************
+
+        private async Task SumLineTotals(int PoId)
+        {
+            var po = await _context.PurchaseOrders.FindAsync(PoId);
+            if(po == null)
+            {
+                throw new Exception("FATAL: PO not found. Unable to recalculate total.");
+            }
+            var lines = await _context.PoLines
+                                .Join(
+                                _context.Items,
+                                PoLine => PoLine.ItemId,
+                                Item => Item.Id,
+                                (PoLine, Item) => new
+                                {
+                                    PoId = PoLine.PurchaseOrderId,
+                                    Quantity = PoLine.Quantity,
+                                    Price = Item.Price
+                                })
+                                .Where(i => i.PoId == PoId)
+                                .ToListAsync();
+            var sum = 0.00m;
+            foreach(var line in lines)
+            {
+                sum += line.Quantity * line.Price;
+            }
+            po.Total = sum;
+            await _context.SaveChangesAsync();
+            return;
+        }
+
         // GET: api/PoLines
         [HttpGet]
         public async Task<ActionResult<IEnumerable<PoLine>>> GetPoLine()
@@ -43,8 +83,6 @@ namespace PoWebApi.Controllers
         }
 
         // PUT: api/PoLines/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to, for
-        // more details, see https://go.microsoft.com/fwlink/?linkid=2123754.
         [HttpPut("{id}")]
         public async Task<IActionResult> PutPoLine(int id, PoLine poLine)
         {
@@ -70,19 +108,18 @@ namespace PoWebApi.Controllers
                     throw;
                 }
             }
-
+            await SumLineTotals(poLine.PurchaseOrderId);
             return NoContent();
         }
 
         // POST: api/PoLines
-        // To protect from overposting attacks, enable the specific properties you want to bind to, for
-        // more details, see https://go.microsoft.com/fwlink/?linkid=2123754.
         [HttpPost]
         public async Task<ActionResult<PoLine>> PostPoLine(PoLine poLine)
         {
             _context.PoLine.Add(poLine);
             await _context.SaveChangesAsync();
 
+            await SumLineTotals(poLine.PurchaseOrderId);
             return CreatedAtAction("GetPoLine", new { id = poLine.Id }, poLine);
         }
 
@@ -99,6 +136,7 @@ namespace PoWebApi.Controllers
             _context.PoLine.Remove(poLine);
             await _context.SaveChangesAsync();
 
+            await SumLineTotals(poLine.PurchaseOrderId);
             return poLine;
         }
 
